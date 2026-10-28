@@ -134,7 +134,7 @@ label{display:block;text-align:left;font-size:11px;color:var(--dim);margin:10px 
 <body>
 <div id="title" class="screen show"><div class="panel">
  <div class="logo">GOBLIN<small>GRINDSET</small></div>
- <div class="tag">A co-op gold-hoarding clicker for you + up to 3 goblin homies.<br>Click. Build. Raid. Heist. Retire to the swamp. Repeat.</div>
+ <div class="tag">A co-op gold-hoarding clicker for you + up to 4 goblin homies.<br>Click. Build. Raid. Heist. Retire to the swamp. Repeat.</div>
  <label>Goblin name</label><input id="name" maxlength="12" placeholder="e.g. Roman">
  <label>Your color</label><div class="sw" id="swatch"></div>
  <button class="big" id="bSolo">🪙 Play Solo</button>
@@ -263,7 +263,7 @@ const MGIDS=['raid','rave','runes','cart','heist','bonk'];
 MGIDS.forEach(id=>{addAch({raid:'Karen Defeated',rave:'Rave Legend',runes:'Big Brain',cart:'Drift King',heist:'Ocean\'s Eleven (Goblin Edition)',bonk:'Bonk Master'}[id],'⭐','Get 3 stars in '+id.toUpperCase()+'.',S=>(S.mg[id]||{}).best>=3)});
 [[1,'Retirement Plan'],[3,'Serial Retiree'],[10,'Swamp Regular'],[25,'Professional Retiree']].forEach(([n,nm])=>addAch(nm,'👑','Retire to the Swamp '+n+' time'+(n>1?'s':'')+'.',S=>S.prestiges>=n));
 [[1,'Goblin Godhood'],[3,'Pantheon Member']].forEach(([n,nm])=>addAch(nm,'🔮','Ascend '+n+' time'+(n>1?'s':'')+'.',S=>S.ascensions>=n));
-[[2,'Duo Queue'],[3,'Trio Grind'],[4,'Full Squad']].forEach(([n,nm])=>addAch(nm,'👥','Play with '+n+' goblins online at once.',S=>S.maxOnline>=n));
+[[2,'Duo Queue'],[3,'Trio Grind'],[4,'Four-Stack']].forEach(([n,nm])=>addAch(nm,'👥','Play with '+n+' goblins online at once.',S=>S.maxOnline>=n));
 addAch('Synced Up','🔗','Get 3+ squadmates clicking at the same time.',S=>S.maxSync>=3);
 addAch('Touch Grass','🌱','Come back after being away 1 hour+.',S=>S.flags.grass);
 addAch('Night Owl','🦉','Collect offline earnings of 8 hours+.',S=>S.flags.owl);
@@ -274,6 +274,7 @@ addAch('Hire Everyone','🏢','Own at least 1 of every generator.',S=>S.gens.eve
 addAch('Diversified Portfolio','📊','Own 100 of every generator.',S=>S.gens.every(c=>c>=100));
 addAch('Who Needs Sleep','☕','Play 2 hours in total.',S=>S.time>=7200);
 addAch('Dedicated','⏰','Play 6 hours in total.',S=>S.time>=21600);
+addAch('Full Squad','🖐️','Play with 5 goblins online at once.',S=>S.maxOnline>=5);
 // ================= prestige perks (crowns) =================
 const PERKS=[
  {id:'prod',name:'Swamp Strength',em:'💪',desc:l=>'+25% all production per level (now +'+(l*25)+'%)',max:40,c:l=>Math.ceil(1*Math.pow(1.5,l))},
@@ -326,10 +327,10 @@ const TRI={};TRINK.forEach(t=>TRI[t.id]=t);
 // ================= minigame definitions (text) =================
 const MGDEF={
  raid:{name:'Boss Raid: Karen the HOA Paladin',em:'⚔️',dur:45,how:'Smash the boss! Hit <b>glowing weak points</b> for big damage — colored ones can only be hit by that goblin. At half HP she raises a shield: <b>everyone</b> must hit their own gem within 3 seconds to break it.',rw:'Gold + Raid Loot (big click buff)'},
- rave:{name:'Goblin Rave',em:'🪩',dur:38,how:'Rhythm game! Tap notes as they hit the line. Lanes are split between squadmates — keep the <b>team streak</b> alive. Keys: D F J K / arrows, or tap the lanes.',rw:'Gold + Hype (production buff)'},
+ rave:{name:'Goblin Rave',em:'🪩',dur:38,how:'Rhythm game! Tap notes as they hit the line. Lanes are split between squadmates (5 goblins = 5 lanes) — keep the <b>team streak</b> alive. Keys: D F J K / arrows, or tap the lanes.',rw:'Gold + Hype (production buff)'},
  runes:{name:'Rune Relay',em:'🔮',dur:75,how:'Watch the runes flash, then repeat the sequence. In co-op <b>each rune belongs to one goblin</b> — call out whose turn it is! 3 lives.',rw:'Gold + Big Brain (crit buff)'},
  cart:{name:'Mine Cart Mayhem',em:'🛤️',dur:40,how:'Dodge rocks, grab nuggets. Switch lanes with ←/→, A/D, or tap left/right. Grab a ⭐ to give the <b>whole squad</b> a nitro boost!',rw:'Big gold + Nitro (production buff)'},
- heist:{name:'The Big Bank Job',em:'🏦',dur:75,how:'Roles! <b>Lookout</b> sees guards coming and the vault code — yell it out and hit HIDE. <b>Hacker</b> types the code. <b>Muscle</b> mashes the drill. Do anything while the guard is looking = alarm. Solo: you do it all.',rw:'Huge gold + extra Trophy'},
+ heist:{name:'The Big Bank Job',em:'🏦',dur:75,how:'Roles! <b>Lookout</b> sees guards coming and the vault code — yell it out and hit HIDE. <b>Hacker</b> types the code. <b>Muscle</b> mashes the drill. With 5 goblins, a <b>Decoy</b> can lure a guard away (14s cooldown). Do anything while the guard is looking = alarm. Solo: you do it all.',rw:'Huge gold + extra Trophy'},
  bonk:{name:'Bonk the Tax Goblins',em:'🔨',dur:35,how:'Whack-a-goblin! Bonk 🧾 tax goblins, bonk <b>your colored</b> goblins for bonus, 🌟 golden for jackpot. Do NOT bonk the 💣.',rw:'Gold + Bonk Frenzy + a Golden Goblin'},
 };
 // ================= audio =================
@@ -369,10 +370,10 @@ const Snd={ctx:null,out:null,mus:null,muted:STORE.get('muted',false),musOff:STOR
    case 'nug':if(!this.ok('nug',40))return;this.tone(1500+Math.random()*400,0.07,'sine',0.08,2600);break;
    case 'hit':if(!this.ok('hit',35))return;this.noise(0.06,0.14,2800,0,'bandpass');this.tone(220,0.06,'square',0.04,110);break;
    case 'bighit':if(!this.ok('bh',50))return;this.noise(0.16,0.25,1600);this.tone(160,0.16,'sine',0.2,50);break;
-   case 'perfect':this.tone([523,659,784,988][a|0]*2,0.09,'triangle',0.1);break;
-   case 'good':this.tone([523,659,784,988][a|0]*1.5,0.08,'triangle',0.07);break;
+   case 'perfect':this.tone([523,659,784,988,1175][a|0]*2,0.09,'triangle',0.1);break;
+   case 'good':this.tone([523,659,784,988,1175][a|0]*1.5,0.08,'triangle',0.07);break;
    case 'miss':if(!this.ok('miss',80))return;this.tone(150,0.12,'sawtooth',0.05,90);break;
-   case 'rune':this.tone([392,523,659,784][a|0],0.32,'triangle',0.16);this.tone([392,523,659,784][a|0]*2,0.22,'sine',0.05);break;
+   case 'rune':this.tone([392,523,659,784,880][a|0],0.32,'triangle',0.16);this.tone([392,523,659,784,880][a|0]*2,0.22,'sine',0.05);break;
    case 'wrong':this.tone(130,0.4,'sawtooth',0.12,70);this.noise(0.3,0.1,600);break;
    case 'crash':this.noise(0.35,0.3,900);this.tone(120,0.3,'square',0.08,40);break;
    case 'boost':this.tone(300,0.5,'sawtooth',0.07,1400);this.noise(0.4,0.1,3000,0,'highpass');break;
@@ -574,6 +575,7 @@ async function importCode(str){str=String(str||'').trim().replace(/\s+/g,'');let
  const o=JSON.parse(new TextDecoder().decode(u8));if(!o||!Array.isArray(o.gens))throw new Error('Save looks broken');return sanitize(o)}
 
 // ================= networking =================
+const MAXP=5;
 const NET={mode:null,peer:null,conns:new Map(),conn:null,myId:'h',code:'',nextPid:1,joinTimer:0,myIdSet:false,hostName:'',lastPing:0};
 let me={name:STORE.get('name',''),ci:STORE.get('ci',0)|0};
 let ON=[]; // online list [[id,name,ci,clicks]]
@@ -613,7 +615,7 @@ function onHostData(c,d){
  const info=NET.conns.get(c.peer);if(info)info.seen=performance.now();
  if(d.t==='hello'){
   if(info)return;
-  if(PL.size>=4){c.send({t:'full'});setTimeout(()=>c.close(),400);return}
+  if(PL.size>=MAXP){c.send({t:'full'});setTimeout(()=>c.close(),400);return}
   const pid='p'+(NET.nextPid++);const p={id:pid,name:uniqName(d.name),ci:freeColor((d.ci|0)%COLORS.length),lc:-9,c:0};
   PL.set(pid,p);roster(p);NET.conns.set(c.peer,{conn:c,pid,seen:performance.now()});
   c.send({t:'wel',id:pid,code:NET.code,host:me.name});
@@ -661,7 +663,7 @@ let snapT=0;
 function onClientData(d){
  if(!d||typeof d!=='object')return;
  if(d.t==='wel'){NET.myId=d.id;NET.myIdSet=true;NET.hostName=d.host||'Host';clearTimeout(NET.joinTimer);snapT=performance.now();enterGame();Snd.play('join');toast('Joined '+(d.host||'the')+'\'s squad ('+d.code+')!')}
- else if(d.t==='full'){failJoin('That squad is full (4 goblins max).')}
+ else if(d.t==='full'){failJoin('That squad is full (5 goblins max).')}
  else if(d.t==='s'){S=sanitizeLite(d.S);S._rt=performance.now();snapT=S._rt;ON=d.on||[];C=calc(S)}
  else if(d.t==='e'){for(const e of d.e||[])handleEv(e)}
  else if(d.t==='m'){MGV=d.m}
@@ -688,8 +690,9 @@ function act(a){
 // ================= minigames: host logic =================
 let MG=null;
 function mgAct(M){return M.pl.filter(id=>PL.has(id))}
-function laneOwners(act){const n=act.length;if(!n)return ['h','h','h','h'];if(n===1)return [act[0],act[0],act[0],act[0]];if(n===2)return [act[0],act[0],act[1],act[1]];if(n===3)return [act[0],act[0],act[1],act[2]];return [act[0],act[1],act[2],act[3]]}
-function heistRoles(act){const n=act.length;const R=n===1?['LHM']:n===2?['LM','HM']:n===3?['L','H','M']:['L','H','M','M'];const o={};act.forEach((id,i)=>o[id]=R[i]||'M');return o}
+function laneCount(n){return n>=5?5:4}
+function laneOwners(act,nl){const n=act.length;nl=nl||laneCount(n);const o=[];for(let i=0;i<nl;i++)o.push(n?act[Math.floor(i*n/nl)]:'h');return o}
+function heistRoles(act){const n=act.length;const R=n===1?['LHM']:n===2?['LM','HM']:n===3?['L','H','M']:n===4?['L','H','M','M']:['L','H','M','M','DM'];const o={};act.forEach((id,i)=>o[id]=R[i]||'M');return o}
 function mgFx(M,...a){M.fx.push([M.fid++,...a]);if(M.fx.length>60)M.fx.splice(0,M.fx.length-60)}
 function mgStart(id,pid){
  if(MG||!MGH[id]||(S.mgCd[id]||0)>0)return;
@@ -759,33 +762,33 @@ const MGH={
   view(M,v){const d=M.d;v.hp=d.hp;v.max=d.max;v.bx=d.bx;v.wp=d.wp.map(w=>[w.id,w.ox,w.oy,w.o,w.l]);v.sh=d.sh?{g:d.sh.g.map(g=>[g.p,g.ox,g.oy,g.h]),t:d.sh.t0>=0?M.t-d.sh.t0:-1}:null;v.tt=Math.floor((M.ph==='play'?M.t:0)/5)%KAREN.length},
  },
  rave:{
-  init(M,n){const d=M.d;d.bpm=128;const beat=60/d.bpm;const rng=mulberry(M.seed);const notes=[];let last=-1;
-   for(let t=beat*4;t<M.dur-1.2;t+=beat/2){const pr=t/M.dur;const rate=(1.35+0.55*(n-1))*(0.65+0.7*pr);if(rng()<rate*beat/2){let l=rng()*4|0;if(l===last&&rng()<0.6)l=(l+1+(rng()*3|0))%4;last=l;notes.push([+t.toFixed(3),l]);if(n>=2&&rng()<0.1+0.12*pr){let l2=(l+1+(rng()*3|0))%4;notes.push([+t.toFixed(3),l2])}}}
+  init(M,n){const d=M.d;d.bpm=128;const beat=60/d.bpm;const rng=mulberry(M.seed);const notes=[];let last=-1;const nl=d.nl=laneCount(n);
+   for(let t=beat*4;t<M.dur-1.2;t+=beat/2){const pr=t/M.dur;const rate=(1.35+0.55*(n-1))*(0.65+0.7*pr);if(rng()<rate*beat/2){let l=rng()*nl|0;if(l===last&&rng()<0.6)l=(l+1+(rng()*(nl-1)|0))%nl;last=l;notes.push([+t.toFixed(3),l]);if(n>=2&&rng()<0.1+0.12*pr){let l2=(l+1+(rng()*(nl-1)|0))%nl;notes.push([+t.toFixed(3),l2])}}}
    d.notes=notes;d.j={};d.cnt={p:0,g:0,m:0};d.streak=0;d.best=0},
   tick(M,dt){const d=M.d;for(let i=0;i<d.notes.length;i++){if(d.j[i])continue;if(M.t>d.notes[i][0]+0.9)this.judge(M,null,i,'m')}},
   judge(M,pid,i,r){const d=M.d;if(d.j[i])return;d.j[i]=r;d.cnt[r]++;if(r==='m')d.streak=0;else{d.streak++;if(d.streak>d.best)d.best=d.streak}
    const pts=r==='p'?100:r==='g'?50:0;M.sc+=pts*(1+Math.min(d.streak,50)/50);if(pid)M.ps[pid]=(M.ps[pid]||0)+pts/50;mgFx(M,'j',i,r)},
   input(M,pid,a){if(a.a!=='j')return;const i=a.i|0,d=M.d;if(i<0||i>=d.notes.length)return;const r=a.r==='p'||a.r==='g'?a.r:'m';
-   const own=laneOwners(mgAct(M));if(own[d.notes[i][1]]!==pid)return;this.judge(M,pid,i,r)},
+   const own=laneOwners(mgAct(M),d.nl);if(own[d.notes[i][1]]!==pid)return;this.judge(M,pid,i,r)},
   stars(M){const d=M.d,N=Math.max(1,d.notes.length);const acc=(d.cnt.p+0.6*d.cnt.g)/N;return acc>=0.85?3:acc>=0.6?2:acc>=0.35?1:0},
   result(M){const d=M.d,N=Math.max(1,d.notes.length);return 'Accuracy '+Math.round((d.cnt.p+0.6*d.cnt.g)/N*100)+'% · '+d.cnt.p+' perfect · '+d.cnt.g+' good · '+d.cnt.m+' missed · best team streak '+d.best},
-  view(M,v){const d=M.d;v.notes=d.notes;v.j=d.j;v.cnt=d.cnt;v.streak=d.streak;v.best=d.best;v.bpm=d.bpm;v.own=laneOwners(v.act)},
+  view(M,v){const d=M.d;v.notes=d.notes;v.j=d.j;v.cnt=d.cnt;v.streak=d.streak;v.best=d.best;v.bpm=d.bpm;v.own=laneOwners(v.act,d.nl);v.nl=d.nl},
  },
  runes:{
-  init(M){const d=M.d;d.seq=[];d.lives=3;d.st='wait';d.tt=0;d.idx=0;d.fl=-1;d.rd=0;d.rng=mulberry(M.seed)},
-  begin(M){const d=M.d;for(let i=0;i<2;i++)d.seq.push(d.rng()*4|0);this.next(M)},
-  next(M){const d=M.d;d.seq.push(d.rng()*4|0);d.st='show';d.tt=-0.4;d.idx=0},
+  init(M,n){const d=M.d;d.nl=laneCount(n);d.seq=[];d.lives=3;d.st='wait';d.tt=0;d.idx=0;d.fl=-1;d.rd=0;d.rng=mulberry(M.seed)},
+  begin(M){const d=M.d;for(let i=0;i<2;i++)d.seq.push(d.rng()*d.nl|0);this.next(M)},
+  next(M){const d=M.d;d.seq.push(d.rng()*d.nl|0);d.st='show';d.tt=-0.4;d.idx=0},
   tick(M,dt){const d=M.d;d.tt+=dt;
    if(d.st==='show'){const step=Math.max(0.3,0.62*Math.pow(0.95,d.rd));const k=Math.floor(d.tt/step);if(d.tt<0)d.fl=-1;else if(k<d.seq.length)d.fl=(d.tt%step<step*0.7)?d.seq[k]:-1;else{d.st='input';d.idx=0;d.tt=0;d.fl=-1}}
    else if(d.st==='input'){if(d.tt>7)this.bad(M,null,-1)}
    else if(d.st==='pause'){if(d.tt>1.1){if(d.nx==='new')this.next(M);else{d.st='show';d.tt=-0.3;d.idx=0}}}},
   bad(M,pid,r){const d=M.d;d.lives--;mgFx(M,'rbad',r,pid);if(d.lives<=0){M.done=1}else{d.st='pause';d.tt=0;d.nx='replay'}},
-  input(M,pid,a){const d=M.d;if(a.a!=='r'||d.st!=='input')return;const r=a.r|0;if(r<0||r>3)return;const act=mgAct(M);const own=laneOwners(act);if(act.length>1&&own[r]!==pid){mgFx(M,'rnot',r,pid);return}
+  input(M,pid,a){const d=M.d;if(a.a!=='r'||d.st!=='input')return;const r=a.r|0;if(r<0||r>=d.nl)return;const act=mgAct(M);const own=laneOwners(act,d.nl);if(act.length>1&&own[r]!==pid){mgFx(M,'rnot',r,pid);return}
    if(r===d.seq[d.idx]){d.idx++;d.tt=0;M.ps[pid]=(M.ps[pid]||0)+1;mgFx(M,'rok',r,pid);if(d.idx>=d.seq.length){d.rd++;M.sc=d.rd;d.st='pause';d.tt=0;d.nx='new';mgFx(M,'round',d.rd)}}
    else this.bad(M,pid,r)},
   stars(M){const r=M.d.rd;return r>=7?3:r>=4?2:r>=2?1:0},
   result(M){return 'Your squad memorized '+M.d.rd+' sequence'+(M.d.rd===1?'':'s')+' (longest: '+(M.d.rd+2)+' runes).'},
-  view(M,v){const d=M.d;v.st=d.st;v.fl=d.fl;v.idx=d.idx;v.len=d.seq.length;v.lives=d.lives;v.rd=d.rd;v.own=laneOwners(v.act);v.tt=d.tt},
+  view(M,v){const d=M.d;v.st=d.st;v.fl=d.fl;v.idx=d.idx;v.len=d.seq.length;v.lives=d.lives;v.rd=d.rd;v.own=laneOwners(v.act,d.nl);v.nl=d.nl;v.tt=d.tt},
  },
  cart:{
   init(M){M.d.rep={};M.d.bo=0;M.d.bid=0},
@@ -797,9 +800,9 @@ const MGH={
   view(M,v){const d=M.d;v.rep=d.rep;v.bo=d.bo>0?1:0;v.bid=d.bid},
  },
  heist:{
-  init(M){const d=M.d;d.pr=0;d.al=0;d.gs='away';d.gt=rand(5,7);d.code=this.code();d.buf={};d.called=0;d.ct={};d.cracked=0},
+  init(M){const d=M.d;d.pr=0;d.al=0;d.gs='away';d.gt=rand(5,7);d.code=this.code();d.buf={};d.called=0;d.ct={};d.cracked=0;d.dcd=0;d.decoys=0},
   code(){return Array.from({length:4},()=>Math.random()*6|0)},
-  tick(M,dt){const d=M.d,act=mgAct(M);d.al=Math.max(0,d.al-1.2*dt);d.gt-=dt;
+  tick(M,dt){const d=M.d,act=mgAct(M);d.al=Math.max(0,d.al-1.2*dt);d.dcd=Math.max(0,d.dcd-dt);d.gt-=dt;
    if(d.gs==='away'&&d.gt<=0){d.gs='coming';d.gt=2.6;d.called=0;mgFx(M,'coming')}
    else if(d.gs==='coming'&&d.gt<=0){d.gs='here';d.gt=2.8;if(!d.called&&act.length>1){d.al+=15;mgFx(M,'nowarn')}mgFx(M,'here')}
    else if(d.gs==='here'&&d.gt<=0){d.gs='away';d.gt=rand(5,9)/(1+M.t/80);mgFx(M,'gone')}
@@ -809,10 +812,11 @@ const MGH={
    if(a.a==='drill'&&role.includes('M')){if(!tok(M,pid,14))return;if(this.caught(M,pid))return;const nM=Math.max(1,Object.values(heistRoles(act)).filter(r=>r.includes('M')).length);d.pr+=0.5/Math.sqrt(n)/Math.sqrt(nM);M.ps[pid]=(M.ps[pid]||0)+0.2;mgFx(M,'drill',pid)}
    else if(a.a==='key'&&role.includes('H')){if(!tok(M,pid,10))return;if(this.caught(M,pid))return;const b=d.buf[pid]||(d.buf[pid]=[]);b.push(clamp(a.s|0,0,5));mgFx(M,'key',pid);
     if(b.length>=4){if(b.every((s,i)=>s===d.code[i])){d.pr+=14/Math.sqrt(n);d.code=this.code();d.cracked++;M.ps[pid]=(M.ps[pid]||0)+6;mgFx(M,'code',pid)}else{d.al+=10;mgFx(M,'badcode',pid)}d.buf[pid]=[]}}
+   else if(a.a==='distract'&&role.includes('D')){if(d.dcd>0||d.gs==='away')return;d.gs='away';d.gt=rand(6,9)/(1+M.t/80);d.dcd=14;d.decoys++;M.ps[pid]=(M.ps[pid]||0)+6;mgFx(M,'distract',pid)}
    else if(a.a==='hide'&&role.includes('L')){if(!tok(M,pid,2))return;if(d.gs==='coming'&&!d.called){d.called=1;M.ps[pid]=(M.ps[pid]||0)+4}mgFx(M,'hide',pid)}},
   stars(M){const d=M.d;return d.win?(d.al<40?3:2):d.pr>=50?1:0},
-  result(M){const d=M.d;return d.win?'You cracked the vault and got away! ('+d.cracked+' codes cracked)':d.busted?'BUSTED! The alarm went off at '+Math.round(d.pr)+'% vault progress.':'Time ran out at '+Math.round(d.pr)+'% vault progress.'},
-  view(M,v){const d=M.d;v.pr=d.pr;v.al=d.al;v.gs=d.gs;v.gt=d.gt;v.code=d.code;v.buf=d.buf;v.roles=heistRoles(v.act);v.called=d.called},
+  result(M){const d=M.d;return d.win?'You cracked the vault and got away! ('+d.cracked+' codes cracked'+(d.decoys?', '+d.decoys+' guard'+(d.decoys>1?'s':'')+' distracted':'')+')':d.busted?'BUSTED! The alarm went off at '+Math.round(d.pr)+'% vault progress.':'Time ran out at '+Math.round(d.pr)+'% vault progress.'},
+  view(M,v){const d=M.d;v.pr=d.pr;v.al=d.al;v.gs=d.gs;v.gt=d.gt;v.code=d.code;v.buf=d.buf;v.roles=heistRoles(v.act);v.called=d.called;v.dcd=d.dcd},
  },
  bonk:{
   init(M){const d=M.d;d.m=[];d.st=0.4;d.mid=1;d.streak=0},
@@ -919,8 +923,8 @@ addEventListener('resize',()=>{if(mgOpen())mgResize()});
 $('#mgLeave').onclick=()=>{if(MGV)mgSat=MGV.uid;$('#mgRes').classList.remove('show')};
 $('#mgBanner').onclick=()=>{mgSat=0;if(MGL)MGL.introShown=true};
 function mgKey(k){const V=MGV;if(!V||!mgOpen()||!MGL||V.ph!=='play'||!amIn())return false;const R=MGR[V.id];if(R.key)return R.key(k,V,MGL)!==false;return false}
-const LANEC=['#ff5fa8','#38d8ff','#6fdc5a','#ffcc33'];
-const RUNEC=['#ff4d6d','#38d8ff','#6fdc5a','#ffcc33'],RUNEE=['🔥','💧','🌿','⚡'];
+const LANEC=['#ff5fa8','#38d8ff','#6fdc5a','#ffcc33','#b48cff'];const LANEK=['D','F','J','K','L'];
+const RUNEC=['#ff4d6d','#38d8ff','#6fdc5a','#ffcc33','#b48cff'],RUNEE=['🔥','💧','🌿','⚡','🌙'];
 const HSYM=['▲','●','■','◆','★','♥'],HCOL=['#ff5fa8','#38d8ff','#6fdc5a','#ffcc33','#b48cff','#ff8a3d'];
 function btn(c,L,x,y,w,h,txt,col,f,o){o=o||{};rr(c,x,y,w,h,Math.min(16,h/3));c.fillStyle=col;c.globalAlpha=o.dim?0.35:1;c.fill();c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=2;c.stroke();
  c.fillStyle=o.tc||'#1a0d00';c.font='900 '+(o.fs||Math.min(26,h*0.42))+'px system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,x+w/2,y+h/2+1);c.textBaseline='alphabetic';c.globalAlpha=1;if(f)L.btns.push({x,y,w,h,f})}
@@ -967,8 +971,8 @@ const MGR={
    else if(t==='nope'&&f[4]===NET.myId&&st){mgPop(st.x+f[2]*st.w,st.y+f[3]*st.h,'not yours!','#ff5a6e',16);Snd.play('no')}},
  },
  rave:{
-  role(V){const mine=V.own.map((o,i)=>o===NET.myId?i:-1).filter(i=>i>=0);return V.act.length>1?'Your lanes: '+mine.map(i=>'<b style="color:'+LANEC[i]+'">'+'DFJK'[i]+'</b>').join(' ')+' — your keys D F J K / arrows all map to your lanes':'You own all 4 lanes: D F J K (or arrows / tap)'},
-  geo(){const w=Math.min(MW*0.92,560),x0=(MW-w)/2,hy=MH-Math.max(90,MH*0.16),ty=64;return {w,x0,lw:w/4,hy,ty,spd:(hy-ty)/1.6}},
+  role(V){const mine=V.own.map((o,i)=>o===NET.myId?i:-1).filter(i=>i>=0);return V.act.length>1?'Your lanes: '+mine.map(i=>'<b style="color:'+LANEC[i]+'">'+LANEK[i]+'</b>').join(' ')+' — any of D F J K L / arrows / Space hits your lane'+(mine.length>1?'s':''):'You own all 4 lanes: D F J K (or arrows / tap)'},
+  geo(){const nl=(MGV&&MGV.nl)||4;const w=Math.min(MW*0.94,nl*140),x0=(MW-w)/2,hy=MH-Math.max(90,MH*0.16),ty=64;return {w,x0,lw:w/nl,nl,hy,ty,spd:(hy-ty)/1.6}},
   local(V,L,dt,lt){const notes=V.notes;for(let i=0;i<notes.length;i++){const n=notes[i];if(V.own[n[1]]!==NET.myId)continue;if(L.j[i]||V.j[i])continue;if(lt-n[0]>0.16){L.j[i]='m';mgSend({a:'j',i,r:'m'});const g=this.geo();mgPop(g.x0+g.lw*(n[1]+0.5),g.hy-30,'MISS','#ff5a6e',18);Snd.play('miss')}}
    if(Snd.ctx&&!Snd.muted&&Music.mode==='rave'){const beat=60/V.bpm/2;const ac=Snd.ctx;let k=Math.max(L.sched,Math.ceil(lt/beat));const m=x=>440*Math.pow(2,(x-69)/12);
     while(k*beat<lt+0.25){const at=ac.currentTime+(k*beat-lt);if(at>ac.currentTime-0.01&&!Snd.musOff){const o=Snd.mus;const bar=(k>>3)&3;const root=[45,41,48,43][bar];
@@ -976,15 +980,15 @@ const MGR={
      Snd.tone(m(root+(k%2?12:0)),0.12,'sawtooth',0.28,null,at,o);if(k%2===0)Snd.tone(m(root+24+[0,7,12,15][(k>>1)%4]),0.1,'square',0.08,null,at,o)}k++}L.sched=k}},
   hit(V,L,lane){if(V.own[lane]!==NET.myId){return}L.press[lane]=0.15;const lt=L.lt;let best=-1,bd=1;for(let i=0;i<V.notes.length;i++){const n=V.notes[i];if(n[1]!==lane||L.j[i]||V.j[i])continue;const d=Math.abs(n[0]-lt);if(d<bd){bd=d;best=i}}
    const g=this.geo();if(best>=0&&bd<0.15){const r=bd<0.07?'p':'g';L.j[best]=r;mgSend({a:'j',i:best,r});mgPop(g.x0+g.lw*(lane+0.5),g.hy-30,r==='p'?'PERFECT':'GOOD',r==='p'?'#ffc93c':'#6fdc5a',r==='p'?22:18);Snd.play(r==='p'?'perfect':'good',lane);L.hitfx=L.hitfx||[];L.hitfx.push({lane,l:0.3})}},
-  key(k,V,L){const map={d:0,f:1,j:2,k:3,arrowleft:0,arrowdown:1,arrowup:2,arrowright:3,' ':-1};if(!(k in map))return false;const mine=V.own.map((o,i)=>o===NET.myId?i:-1).filter(i=>i>=0);if(!mine.length)return true;
+  key(k,V,L){const map={d:0,f:1,j:2,k:3,l:3,arrowleft:0,arrowdown:1,arrowup:2,arrowright:3,' ':-1};if(!(k in map))return false;const mine=V.own.map((o,i)=>o===NET.myId?i:-1).filter(i=>i>=0);if(!mine.length)return true;
    let ki=map[k];if(ki<0){if(mine.length!==1)return true;ki=0}this.hit(V,L,mine[Math.floor(ki*mine.length/4)]);return true},
-  down(x,y,V,L){const g=this.geo();const lane=Math.floor((x-g.x0)/g.lw);if(lane>=0&&lane<4)this.hit(V,L,lane)},
+  down(x,y,V,L){const g=this.geo();const lane=Math.floor((x-g.x0)/g.lw);if(lane>=0&&lane<g.nl)this.hit(V,L,lane)},
   draw(c,V,L,dt,now){const g=this.geo(),lt=L.lt;const beatPh=((lt*V.bpm/60)%1+1)%1;const pulse=V.ph==='play'?Math.max(0,1-beatPh*3):0;
    const lg=c.createRadialGradient(MW/2,MH*0.3,10,MW/2,MH*0.3,MW*0.8);lg.addColorStop(0,'rgba(180,80,255,'+(0.18+pulse*0.2)+')');lg.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=lg;c.fillRect(0,0,MW,MH);
-   for(let i=0;i<4;i++){const x=g.x0+i*g.lw;const mine=V.own[i]===NET.myId;c.fillStyle=mine?'rgba(255,255,255,.07)':'rgba(255,255,255,.02)';c.fillRect(x+2,g.ty,g.lw-4,MH-g.ty);
+   for(let i=0;i<g.nl;i++){const x=g.x0+i*g.lw;const mine=V.own[i]===NET.myId;c.fillStyle=mine?'rgba(255,255,255,.07)':'rgba(255,255,255,.02)';c.fillRect(x+2,g.ty,g.lw-4,MH-g.ty);
     if(L.press[i]>0){L.press[i]-=dt;c.fillStyle=LANEC[i];c.globalAlpha=0.25;c.fillRect(x+2,g.ty,g.lw-4,g.hy-g.ty+20);c.globalAlpha=1}
     c.strokeStyle=LANEC[i];c.globalAlpha=mine?1:0.35;c.lineWidth=4;c.beginPath();c.arc(x+g.lw/2,g.hy,Math.min(g.lw*0.32,30),0,TAU);c.stroke();c.globalAlpha=1;
-    c.fillStyle=mine?'#fff':'rgba(255,255,255,.4)';c.font='900 14px system-ui';c.textAlign='center';c.fillText(V.act.length>1?pname(V.own[i]).slice(0,8):'DFJK'[i],x+g.lw/2,g.hy+Math.min(g.lw*0.32,30)+18)}
+    c.fillStyle=mine?'#fff':'rgba(255,255,255,.4)';c.font='900 14px system-ui';c.textAlign='center';c.fillText(V.act.length>1?pname(V.own[i]).slice(0,8):LANEK[i],x+g.lw/2,g.hy+Math.min(g.lw*0.32,30)+18)}
    c.fillStyle='rgba(255,255,255,.5)';c.fillRect(g.x0,g.hy-1,g.w,2);
    for(let i=0;i<V.notes.length;i++){const n=V.notes[i];if(L.j[i]||V.j[i])continue;const d=n[0]-lt;if(d>1.75||d<-0.3)continue;const y=g.hy-d*g.spd;const x=g.x0+n[1]*g.lw;const mine=V.own[n[1]]===NET.myId;
     c.globalAlpha=mine?1:0.45;c.save();c.shadowColor=LANEC[n[1]];c.shadowBlur=mine?16:0;rr(c,x+g.lw*0.14,y-12,g.lw*0.72,24,10);c.fillStyle=LANEC[n[1]];c.fill();c.restore();c.fillStyle='rgba(255,255,255,.6)';rr(c,x+g.lw*0.22,y-7,g.lw*0.56,6,3);c.fill();c.globalAlpha=1}
@@ -994,11 +998,11 @@ const MGR={
   fx(f,V,L){if(f[1]==='j'&&f[2]!=null){const n=V.notes[f[2]];if(n&&V.own[n[1]]!==NET.myId&&f[3]!=='m'){const g=this.geo();mgPop(g.x0+g.lw*(n[1]+0.5),g.hy-30,f[3]==='p'?'✦':'·',LANEC[n[1]],20)}}},
  },
  runes:{
-  role(V){if(V.act.length<2)return 'All 4 runes are yours. Keys 1-4 or tap.';const mine=V.own.map((o,i)=>o===NET.myId?RUNEE[i]:'').filter(Boolean);return 'Your runes: '+mine.join(' ')+' — only YOU can press them. Talk it out!'},
-  geo(){const s=Math.min(MW*0.4,(MH-190)/2.15,210);const gx=(MW-s*2-16)/2,gy=150+Math.max(0,(MH-190-s*2.15)/2);return {s,gx,gy}},
+  role(V){if(V.act.length<2)return 'All '+(V.nl||4)+' runes are yours. Keys 1-'+(V.nl||4)+' or tap.';const mine=V.own.map((o,i)=>o===NET.myId?RUNEE[i]:'').filter(Boolean);return 'Your runes: '+mine.join(' ')+' — only YOU can press them. Talk it out!'},
+  geo(){const nl=(MGV&&MGV.nl)||4;const cols=nl===5?3:2;const s=Math.min((MW-40)/cols-16,(MH-190)/2.15,210);const gy=150+Math.max(0,(MH-190-s*2.15)/2);const pos=i=>{const row=Math.floor(i/cols),inRow=row===0?Math.min(cols,nl):nl-cols;const col=i-row*cols;const rw=inRow*s+(inRow-1)*16;return {x:(MW-rw)/2+col*(s+16),y:gy+row*(s+16)}};return {s,gy,nl,pos}},
   draw(c,V,L,dt,now){const g=this.geo();const t=now/1000;
    if(V.fl!==L.lastFl){L.lastFl=V.fl;if(V.fl>=0)Snd.play('rune',V.fl)}
-   for(let i=0;i<4;i++){const x=g.gx+(i%2)*(g.s+16),y=g.gy+Math.floor(i/2)*(g.s+16);const lit=V.fl===i||L.press[i]>0;if(L.press[i]>0)L.press[i]-=dt;const mine=V.act.length<2||V.own[i]===NET.myId;
+   for(let i=0;i<g.nl;i++){const {x,y}=g.pos(i);const lit=V.fl===i||L.press[i]>0;if(L.press[i]>0)L.press[i]-=dt;const mine=V.act.length<2||V.own[i]===NET.myId;
     c.save();if(lit){c.shadowColor=RUNEC[i];c.shadowBlur=40}rr(c,x,y,g.s,g.s,22);c.fillStyle=lit?shade(RUNEC[i],0.35):shade(RUNEC[i],-0.55);c.fill();c.restore();
     c.lineWidth=mine?4:2;c.strokeStyle=mine?RUNEC[i]:'rgba(255,255,255,.2)';rr(c,x,y,g.s,g.s,22);c.stroke();
     c.font=(g.s*0.42)+'px system-ui';c.textAlign='center';c.textBaseline='middle';c.globalAlpha=lit?1:0.6;c.fillText(RUNEE[i],x+g.s/2,y+g.s/2-6);c.globalAlpha=1;c.textBaseline='alphabetic';
@@ -1010,7 +1014,7 @@ const MGR={
    c.font='700 15px system-ui';c.fillStyle='#a99cc9';c.fillText('Round '+V.rd+'  ·  Lives '+'❤️'.repeat(Math.max(0,V.lives))+'🖤'.repeat(Math.max(0,3-V.lives)),MW/2,126);
    if(V.st==='input'){c.fillStyle='#6fdc5a';c.fillRect(MW/2-100,134,200*Math.max(0,1-V.tt/7),4)}},
   press(V,L,i){if(V.ph!=='play')return;if(V.act.length>1&&V.own[i]!==NET.myId){mgPop(MW/2,MH-40,'That rune belongs to '+pname(V.own[i])+'!','#ff5a6e',18);Snd.play('no');return}if(V.st!=='input'){return}L.press[i]=0.25;Snd.play('rune',i);mgSend({a:'r',r:i})},
-  key(k,V,L){const i='1234'.indexOf(k);if(i>=0){this.press(V,L,i);return true}return false},
+  key(k,V,L){const i='12345'.slice(0,V.nl||4).indexOf(k);if(i>=0){this.press(V,L,i);return true}return false},
   fx(f,V,L){if(f[1]==='rok'){L.lastBad=false;if(f[3]!==NET.myId){L.press[f[2]]=0.25;Snd.play('rune',f[2])}}else if(f[1]==='rbad'){L.lastBad=true;Snd.play('wrong');mgShake=10;mgBan(f[3]?pname(f[3])+' slipped up!':'Too slow!','#ff5a6e',1)}else if(f[1]==='round'){L.lastBad=false;Snd.play('up')}else if(f[1]==='rnot'&&f[3]===NET.myId){Snd.play('no')}},
  },
  cart:{
@@ -1046,7 +1050,7 @@ const MGR={
   cartG(c,x,y,r,col){c.fillStyle='#222';c.beginPath();c.arc(x-r*0.6,y-r*0.15,r*0.22,0,TAU);c.arc(x+r*0.6,y-r*0.15,r*0.22,0,TAU);c.fill();c.fillStyle=col;c.beginPath();c.moveTo(x-r,y-r*0.95);c.lineTo(x+r,y-r*0.95);c.lineTo(x+r*0.8,y-r*0.25);c.lineTo(x-r*0.8,y-r*0.25);c.closePath();c.fill();drawGoblin(c,x,y-r*1.25,r*0.45,{skin:'#6fdc5a',mouth:1})},
  },
  heist:{
-  role(V){const r=(V.roles||{})[NET.myId]||'';const n={L:'👀 Lookout',H:'💻 Hacker',M:'💪 Muscle'};return 'Your role: <b>'+r.split('').map(x=>n[x]).join(' + ')+'</b>'},
+  role(V){const r=(V.roles||{})[NET.myId]||'';const n={L:'👀 Lookout',H:'💻 Hacker',M:'💪 Muscle',D:'🎭 Decoy'};return 'Your role: <b>'+r.split('').map(x=>n[x]).join(' + ')+'</b>'},
   myRole(V){return (V.roles||{})[NET.myId]||''},
   draw(c,V,L,dt,now){const t=now/1000;const role=this.myRole(V);const wide=MW>=760;
    const bw=Math.min(MW-40,700),bx=(MW-bw)/2;
@@ -1074,18 +1078,22 @@ const MGR={
    if(!this.myRole(V).includes('L')){c.font='700 12px system-ui';c.fillStyle='#ffc93c';c.fillText('Ask your Lookout for the code!',r.x+r.w/2,r.y+sw+52)}
    const ky=r.y+sw+62,kh=r.h-(sw+62)-10;const kw=(r.w-24-16)/3,kk=Math.min(kh/2-6,70);
    for(let i=0;i<6;i++){const x=r.x+12+(i%3)*(kw+8),y=ky+Math.floor(i/3)*(kk+8);btn(c,L,x,y,kw,kk,HSYM[i]+' '+(i+1),HCOL[i],()=>this.act('key',i),{fs:Math.min(24,kk*0.45)})}},
+  pD(c,V,L,r,t){const live=V.gs!=='away';const ready=V.dcd<=0;c.textAlign='center';c.font='900 14px system-ui';c.fillStyle='#a99cc9';c.fillText('🎭 DECOY — DISTRACTION',r.x+r.w/2,r.y+22);
+   c.font='700 12px system-ui';c.fillStyle='#ddd';c.fillText(V.gs==='coming'?'A guard is coming — listen for the Lookout!':V.gs==='here'?'Guard is LOOKING! Lure him away!':'Wait for a guard, then distract him.',r.x+r.w/2,r.y+44);
+   c.font='42px system-ui';c.fillText(live?'🥁':'🎭',r.x+r.w/2,r.y+r.h*0.42);
+   const bh=Math.min(r.h*0.32,110);btn(c,L,r.x+16,r.y+r.h-bh-12,r.w-32,bh,ready?'🎺 DISTRACT! (G)':'⏳ '+Math.ceil(V.dcd)+'s','#b48cff',()=>this.act('distract'),{dim:!ready||!live,tc:'#160530'})},
   pM(c,V,L,r,t){c.textAlign='center';c.font='900 14px system-ui';c.fillStyle='#a99cc9';c.fillText('💪 MUSCLE — DRILL',r.x+r.w/2,r.y+22);
    const cx=r.x+r.w/2,cy=r.y+r.h*0.36,rad=Math.min(r.w*0.28,r.h*0.2);L.drillA=(L.drillA||0)+(L.drillV||0);L.drillV=(L.drillV||0)*0.9;
    c.fillStyle='#555a6e';c.beginPath();c.arc(cx,cy,rad,0,TAU);c.fill();c.strokeStyle='#8a90a8';c.lineWidth=6;c.stroke();for(let k=0;k<6;k++){const a=L.drillA+k*TAU/6;c.strokeStyle='#33364a';c.lineWidth=5;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+Math.cos(a)*rad*0.9,cy+Math.sin(a)*rad*0.9);c.stroke()}
    c.fillStyle='#ffc93c';c.beginPath();c.arc(cx,cy,rad*0.2,0,TAU);c.fill();
    const bh=Math.min(r.h*0.32,110);btn(c,L,r.x+16,r.y+r.h-bh-12,r.w-32,bh,'🔩 DRILL! (Space)','#ffc93c',()=>this.act('drill'))},
   act(a,s){const V=MGV;if(!V||V.ph!=='play')return;if(a==='drill'){MGL.drillV=0.4;Snd.play('drill');if(Math.random()<0.3)mgPop(rand(MW*0.3,MW*0.7),MH*0.5,'⚙️','#fff',18)}if(a==='key')Snd.play('key');mgSend({a,s})},
-  key(k,V,L){const r=this.myRole(V);if(k===' '&&r.includes('M')){this.act('drill');return true}if(k==='h'&&r.includes('L')){this.act('hide');return true}const i='123456'.indexOf(k);if(i>=0&&r.includes('H')){this.act('key',i);return true}return false},
+  key(k,V,L){const r=this.myRole(V);if(k===' '&&r.includes('M')){this.act('drill');return true}if(k==='h'&&r.includes('L')){this.act('hide');return true}if(k==='g'&&r.includes('D')){this.act('distract');return true}const i='123456'.indexOf(k);if(i>=0&&r.includes('H')){this.act('key',i);return true}return false},
   fx(f,V,L){const t=f[1],me_=f[2]===NET.myId;const role=this.myRole(V);
    if(t==='coming'&&role.includes('L')){Snd.play('alarm')}else if(t==='hide'){mgBan('🚨 '+(V.act.length>1?pname(f[2])+': ':'')+'HIDE!!','#ff5a6e',1.4);Snd.play('hide')}
    else if(t==='nowarn'){mgBan('Nobody warned the crew! +15 alarm','#ff8a3d',1.6);Snd.play('alarm')}else if(t==='here'){Snd.play('tick')}
    else if(t==='caught'){mgPop(MW/2,MH*0.62,(me_?'YOU':pname(f[2]))+' GOT SPOTTED! +alarm','#ff5a6e',22);Snd.play('alarm');mgShake=8}
-   else if(t==='code'){mgBan('🔓 CODE CRACKED!','#6fdc5a',1.2);Snd.play('up')}else if(t==='badcode'){mgBan('❌ WRONG CODE +alarm','#ff5a6e',1.2);Snd.play('wrong')}
+   else if(t==='distract'){mgBan('🎺 '+pname(f[2])+' distracted the guard!','#b48cff',1.5);Snd.play('boost')}else if(t==='code'){mgBan('🔓 CODE CRACKED!','#6fdc5a',1.2);Snd.play('up')}else if(t==='badcode'){mgBan('❌ WRONG CODE +alarm','#ff5a6e',1.2);Snd.play('wrong')}
    else if(t==='drill'&&!me_){if(MGL)MGL.drillV=0.3}},
  },
  bonk:{
@@ -1127,7 +1135,7 @@ function startLocal(host){
  const gap=(Date.now()-S.lastSave)/1000;const fresh=S.allEarned===0&&S.time<5;
  if(!fresh&&gap>30){const g=offlineGain(gap);if(g.v>0)earn(g.v);if(gap>=3600)S.flags.grass=1;if(gap>=8*3600&&g.v>0)S.flags.owl=1;
   modal('<div style="font-size:50px">😴</div><h2 style="margin:4px 0">While you were away…</h2><p class="tag">You were gone <b>'+fmtT(gap)+'</b>. Your goblins kept grinding'+(g.t<gap?' (capped at '+fmtT(g.t)+')':'')+' at '+Math.round(C.offRate*100)+'% speed.</p><div class="big2">+'+fmt(g.v)+' gold</div><button class="big" data-m="close" style="margin-top:12px">Collect 💰</button><p class="fine">Upgrade offline earnings with Crown perks (Night Shift, Extra Long Nap).</p>')}
- else if(fresh)modal('<div style="font-size:50px">👺</div><h2 style="margin:4px 0">Welcome to the Grindset</h2><p class="tag" style="text-align:left">💰 <b>Click the giant coin</b> to earn gold. Click fast for a <b>combo</b>.<br>🏗️ <b>Build</b> generators that earn while you\'re away.<br>✨ Catch <b>Golden Goblins</b> when they pop up.<br>🎮 Play <b>minigames</b> (better with friends!) for huge boosts.<br>👑 Later, <b>Retire to the Swamp</b> for permanent Crowns.<br>👥 Hit <b>Host a Squad</b> so up to 3 friends can join and pump gold into the same hoard.</p><button class="big" data-m="close">LET\'S GRIND</button>');
+ else if(fresh)modal('<div style="font-size:50px">👺</div><h2 style="margin:4px 0">Welcome to the Grindset</h2><p class="tag" style="text-align:left">💰 <b>Click the giant coin</b> to earn gold. Click fast for a <b>combo</b>.<br>🏗️ <b>Build</b> generators that earn while you\'re away.<br>✨ Catch <b>Golden Goblins</b> when they pop up.<br>🎮 Play <b>minigames</b> (better with friends!) for huge boosts.<br>👑 Later, <b>Retire to the Swamp</b> for permanent Crowns.<br>👥 Hit <b>Host a Squad</b> so up to 4 friends can join and pump gold into the same hoard.</p><button class="big" data-m="close">LET\'S GRIND</button>');
  C=calc(S);saveGame();
  if(host)goOnline();
 }
@@ -1284,12 +1292,12 @@ const TR={
  },
  squad(){
   let h='<div class="card">';
-  if(NET.mode==='solo')h+='<h3>🧍 Playing solo</h3><p>Go online to let up to 3 friends join <b>your</b> hoard. Everyone\'s clicks, purchases and minigames power the same squad.</p><button class="g" data-a="online">👥 Open squad room</button>';
+  if(NET.mode==='solo')h+='<h3>🧍 Playing solo</h3><p>Go online to let up to 4 friends join <b>your</b> hoard. Everyone\'s clicks, purchases and minigames power the same squad.</p><button class="g" data-a="online">👥 Open squad room</button>';
   else if(NET.mode==='host')h+='<h3>👑 You are the host</h3>'+(NET.ready?'<p>Room code:</p><div class="logo" style="font-size:44px;letter-spacing:8px">'+NET.code+'</div><p>Friends: open this game, type the code, press <b>Join</b>. Or send them the invite link.</p><button data-a="copy">📋 Copy invite link</button> ':'<p>Opening room…</p>')+'<button class="ghost sm" data-a="leave">Close room & go to menu</button><p class="fine">Keep this tab open — your save is the squad\'s save. If you close it, friends get disconnected (your goblins still earn offline).</p>';
   else h+='<h3>🤝 In '+esc(NET.hostName)+'\'s squad</h3><p>Room <b>'+NET.code+'</b>. Everything you earn goes into the shared hoard. Only the host can retire/ascend or import saves.</p><button class="ghost sm" data-a="leave">Leave squad</button>';
   h+='</div>';
   const on=NET.mode==='client'?ON:onList();
-  h+='<div class="card"><h3>Squad bonuses</h3><p>👥 Online: <b>'+on.length+'</b>/4 → production <b>x'+fmt(C.squad,1)+'</b> ('+Math.round(C.E.sq*100)+'% per extra goblin)</p><p>🔗 Squad Sync: <b>+'+Math.round(C.sync*100)+'%</b> click power for every extra goblin clicking at the same time (now x'+(1+C.sync*((S.sk||1)-1)).toFixed(2)+')</p></div>';
+  h+='<div class="card"><h3>Squad bonuses</h3><p>👥 Online: <b>'+on.length+'</b>/'+MAXP+' → production <b>x'+fmt(C.squad,1)+'</b> ('+Math.round(C.E.sq*100)+'% per extra goblin)</p><p>🔗 Squad Sync: <b>+'+Math.round(C.sync*100)+'%</b> click power for every extra goblin clicking at the same time (now x'+(1+C.sync*((S.sk||1)-1)).toFixed(2)+')</p></div>';
   const rows=Object.values(S.ps).sort((a,b)=>b.g-a.g);const onNames=new Set(on.map(p=>p[1].toLowerCase()));
   h+='<div class="sec">Contribution leaderboard</div><table class="lb"><tr><th>Goblin</th><th style="text-align:right">Gold</th><th style="text-align:right">Clicks</th><th style="text-align:right">Games</th><th style="text-align:right">✨</th></tr>'+rows.map((r,i)=>'<tr><td>'+(i===0?'👑 ':'')+'<span class="dotc" style="background:'+COLORS[r.ci|0]+'"></span>'+esc(r.n)+(onNames.has(r.n.toLowerCase())?' <span class="pill" style="color:var(--grn)">online</span>':'')+'</td><td class="n">'+fmt(r.g)+'</td><td class="n">'+fmt(r.c)+'</td><td class="n">'+fmt(r.mg)+(r.mvp?' · 🏅'+r.mvp:'')+'</td><td class="n">'+r.gob+'</td></tr>').join('')+'</table>';
   h+='<div class="sec">Hoard stats</div><div class="card"><p>All-time gold: <b>'+fmt(S.allEarned)+'</b> · This run: <b>'+fmt(S.runEarned)+'</b><br>Best gold/sec: <b>'+fmt(S.bestGps,1)+'</b> · Clicks: <b>'+fmt(S.clicks)+'</b> · Crits: <b>'+fmt(S.crits)+'</b><br>Golden Goblins: <b>'+S.goldens+'</b> · Minigames: <b>'+S.mgPlayed+'</b> · Best combo: <b>'+S.maxCombo+'</b><br>Retirements: <b>'+S.prestiges+'</b> · Ascensions: <b>'+S.ascensions+'</b> · Play time: <b>'+fmtT(S.time)+'</b></p></div>';
